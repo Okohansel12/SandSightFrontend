@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SandSight</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F6F6F8;
+    --card:#FFFFFF;
+    --border:#E9E9EE;
+    --text:#16151A;
+    --muted:#8A8A94;
+    --accent:#7C3AED;
+    --accent-soft:#F1E9FE;
+    --accent-line:#EADCFC;
+    --ink:#16151A;
+    --success:#16A34A;
+    --success-soft:#EAF7EE;
+    --warning:#D97706;
+    --warning-soft:#FDF2E3;
+    --danger:#DC2626;
+    --danger-soft:#FCEAEA;
+    --radius:14px;
+  }
+  :root:not([data-theme="light"]){
+    /* no dark-mode variant requested; keep light tokens */
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Inter',system-ui,-apple-system,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit;text-decoration:none;}
+  button{font-family:inherit;cursor:pointer;}
+
+  /* ---------- layout ---------- */
+  .shell{display:flex;min-height:100vh;}
+  .sidebar{
+    width:236px;flex-shrink:0;background:#fff;border-right:1px solid var(--border);
+    display:flex;flex-direction:column;padding:22px 16px;position:sticky;top:0;height:100vh;
+  }
+  .brand{display:flex;align-items:center;gap:9px;padding:4px 8px 22px 8px;}
+  .brand-mark{
+    width:26px;height:26px;border-radius:8px;background:var(--accent);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .brand-mark svg{width:15px;height:15px;stroke:#fff;}
+  .brand-name{font-weight:700;font-size:16.5px;letter-spacing:-0.01em;}
+
+  .nav{display:flex;flex-direction:column;gap:2px;flex:1;}
+  .nav-item{
+    display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;
+    font-size:14.5px;color:var(--muted);font-weight:500;
+  }
+  .nav-item svg{width:18px;height:18px;stroke:currentColor;flex-shrink:0;}
+  .nav-item:hover{background:#F7F5FB;color:var(--text);}
+  .nav-item.active{background:var(--accent-soft);color:var(--accent);font-weight:600;}
+
+  .sidebar-foot{border-top:1px solid var(--border);padding-top:14px;margin-top:8px;}
+  .user-chip{display:flex;align-items:center;gap:10px;padding:6px 4px;}
+  .avatar{
+    width:34px;height:34px;border-radius:50%;background:var(--accent);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;
+  }
+  .user-meta .name{font-size:13.5px;font-weight:600;line-height:1.2;}
+  .user-meta .role{font-size:12px;color:var(--muted);}
+
+  .main{flex:1;min-width:0;display:flex;flex-direction:column;}
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
+    padding:16px 32px;border-bottom:1px solid var(--border);background:#fff;
+  }
+  .search{
+    flex:1;max-width:420px;display:flex;align-items:center;gap:9px;background:var(--bg);
+    border:1px solid var(--border);border-radius:10px;padding:9px 13px;color:var(--muted);
+  }
+  .search svg{width:16px;height:16px;stroke:currentColor;flex-shrink:0;}
+  .search input{border:none;background:none;outline:none;font-size:13.5px;color:var(--text);width:100%;font-family:inherit;}
+  .topbar-right{display:flex;align-items:center;gap:18px;}
+  .bell{width:19px;height:19px;stroke:var(--muted);}
+  .topbar-user{display:flex;align-items:center;gap:9px;}
+
+  .content{padding:30px 32px 56px 32px;max-width:1180px;width:100%;}
+  .page{display:none;}
+  .page.active{display:block;}
+
+  /* ---------- typography helpers ---------- */
+  h1.page-title{font-size:25px;font-weight:700;letter-spacing:-0.015em;margin:0 0 4px 0;}
+  p.page-sub{font-size:14px;color:var(--muted);margin:0;line-height:1.5;}
+  .row-between{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap;}
+
+  .btn-primary{
+    background:var(--ink);color:#fff;border:none;border-radius:10px;padding:11px 18px;
+    font-size:13.5px;font-weight:600;display:inline-flex;align-items:center;gap:7px;
+  }
+  .btn-primary:hover{background:#000;}
+  .btn-secondary{
+    background:#fff;color:var(--text);border:1px solid var(--border);border-radius:10px;
+    padding:9px 15px;font-size:13.5px;font-weight:600;
+  }
+  .btn-secondary:hover{border-color:#D6D3DD;}
+  .btn-ghost{background:none;border:none;color:var(--muted);font-size:13px;font-weight:600;display:flex;align-items:center;gap:5px;}
+  .btn-ghost:hover{color:var(--text);}
+
+  .section-head{display:flex;align-items:center;justify-content:space-between;margin:34px 0 14px 0;}
+  .section-title{display:flex;align-items:center;gap:9px;font-size:16.5px;font-weight:700;}
+  .count-pill{background:var(--accent-soft);color:var(--accent);font-size:12px;font-weight:700;padding:2px 9px;border-radius:20px;}
+
+  /* ---------- well risk cards (horizontal scroll) ---------- */
+  .card-row{display:flex;gap:14px;overflow-x:auto;padding-bottom:10px;scrollbar-width:thin;}
+  .risk-card{
+    background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+    padding:18px;min-width:242px;flex-shrink:0;
+  }
+  .risk-card .top-line{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:9px;}
+  .risk-card .field-label{font-size:12.5px;color:var(--muted);font-weight:500;}
+  .risk-card .rank{background:var(--accent-soft);color:var(--accent);font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:20px;}
+  .risk-card .well-id{font-size:17px;font-weight:700;margin:2px 0 3px 0;letter-spacing:-0.01em;}
+  .risk-card .meta{font-size:12.5px;color:var(--muted);margin-bottom:14px;}
+  .risk-card .metric-line{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);margin-bottom:6px;}
+  .risk-card .metric-line b{color:var(--text);font-weight:600;}
+  .bar-track{height:6px;background:var(--bg);border-radius:20px;overflow:hidden;margin-bottom:13px;}
+  .bar-fill{height:100%;border-radius:20px;}
+  .risk-card .bottom-line{display:flex;align-items:center;justify-content:space-between;}
+  .dot-label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);}
+  .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+  .tag{font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:7px;}
+
+  /* ---------- two-column dashboard bottom ---------- */
+  .grid-2{display:grid;grid-template-columns:1.55fr 1fr;gap:18px;margin-top:30px;align-items:start;}
+  @media (max-width:860px){.grid-2{grid-template-columns:1fr;}}
+  .panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:22px;}
+  .panel-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;}
+  .panel-head h3{font-size:15.5px;font-weight:700;margin:0 0 3px 0;}
+  .panel-head p{font-size:12.5px;color:var(--muted);margin:0;}
+
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{text-align:left;font-size:11.5px;color:var(--muted);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--border);}
+  td{padding:11px 10px;border-bottom:1px solid #F1F0F4;}
+  tr:last-child td{border-bottom:none;}
+  .well-cell{font-weight:600;}
+  .field-chip{font-size:11px;color:var(--muted);}
+
+  .snapshot-metric{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #F1F0F4;}
+  .snapshot-metric:last-child{border-bottom:none;}
+  .snapshot-metric .label{font-size:13px;color:var(--muted);}
+  .snapshot-metric .value{font-size:15px;font-weight:700;}
+  .snapshot-metric .value.small{font-size:13px;font-weight:600;color:var(--muted);}
+
+  /* ---------- badges & tags reused ---------- */
+  .risk-Normal{background:var(--success-soft);color:var(--success);}
+  .risk-Elevated{background:var(--warning-soft);color:var(--warning);}
+  .risk-Critical{background:var(--danger-soft);color:var(--danger);}
+  .bar-Normal{background:var(--success);}
+  .bar-Elevated{background:var(--warning);}
+  .bar-Critical{background:var(--danger);}
+  .dot-Normal{background:var(--success);}
+  .dot-Elevated{background:var(--warning);}
+  .dot-Critical{background:var(--danger);}
+
+  /* ---------- Run Prediction page ---------- */
+  .form-panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-top:22px;}
+  .field-label-sm{font-size:12.5px;font-weight:600;color:var(--text);margin-bottom:7px;display:block;}
+  .field-hint{font-size:12px;color:var(--muted);margin-top:6px;}
+  select, .select-look{
+    width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:9px;font-size:13.5px;
+    font-family:inherit;background:#fff;color:var(--text);
+  }
+  .status-line{display:flex;align-items:center;gap:8px;margin-top:11px;font-size:12.5px;padding:9px 12px;border-radius:8px;}
+  .status-ok{background:var(--success-soft);color:var(--success);}
+  .status-warn{background:var(--warning-soft);color:var(--warning);}
+  .status-block{background:var(--danger-soft);color:var(--danger);}
+
+  .hist-table-wrap{overflow-x:auto;margin-top:16px;border:1px solid var(--border);border-radius:10px;}
+  .hist-table{min-width:760px;}
+  .hist-table th{white-space:nowrap;}
+  .hist-table input{
+    width:88px;border:1px solid var(--border);border-radius:7px;padding:7px 8px;font-size:12.5px;
+    font-family:inherit;color:var(--text);
+  }
+  .hist-table input:focus{outline:2px solid var(--accent-line);border-color:var(--accent);}
+  .row-actions button{
+    background:none;border:none;color:var(--muted);font-size:12px;font-weight:600;padding:4px 6px;
+  }
+  .row-actions button:hover{color:var(--danger);}
+
+  .table-controls{display:flex;justify-content:space-between;align-items:center;margin-top:12px;}
+  .completeness{margin-top:16px;padding:11px 14px;border-radius:9px;font-size:12.5px;display:flex;align-items:flex-start;gap:9px;}
+  .completeness svg{width:15px;height:15px;flex-shrink:0;margin-top:1px;}
+
+  .toggle-group{display:flex;gap:8px;margin-top:18px;}
+  .toggle-opt{
+    flex:1;border:1px solid var(--border);border-radius:9px;padding:11px 14px;font-size:13px;font-weight:600;
+    color:var(--muted);background:#fff;text-align:left;
+  }
+  .toggle-opt small{display:block;font-weight:400;font-size:11.5px;color:var(--muted);margin-top:2px;}
+  .toggle-opt.selected{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);}
+  .toggle-opt.selected small{color:var(--accent);opacity:0.75;}
+
+  .predict-actions{display:flex;align-items:center;gap:14px;margin-top:22px;}
+  .demo-note{font-size:11.5px;color:var(--muted);}
+
+  .result-panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-top:20px;display:none;}
+  .result-panel.scenario{border:1.5px dashed var(--accent);}
+  .scenario-flag{display:inline-flex;align-items:center;gap:6px;background:var(--accent-soft);color:var(--accent);font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:20px;margin-bottom:14px;}
+  .result-numbers{display:flex;gap:28px;flex-wrap:wrap;margin:6px 0 16px 0;}
+  .result-numbers .num-block .label{font-size:12.5px;color:var(--muted);margin-bottom:4px;}
+  .result-numbers .num-block .num{font-size:30px;font-weight:800;letter-spacing:-0.02em;}
+  .result-numbers .num-block .unit{font-size:13px;font-weight:500;color:var(--muted);}
+  .caveat-line{display:flex;gap:9px;background:var(--warning-soft);color:#8a5a06;padding:10px 13px;border-radius:9px;font-size:12.5px;margin-bottom:16px;align-items:flex-start;}
+  .caveat-line svg{width:15px;height:15px;flex-shrink:0;margin-top:1px;}
+  .why-strip{font-size:12.5px;color:var(--muted);margin-bottom:18px;}
+  .why-strip b{color:var(--text);font-weight:600;}
+
+  .mitigation-box{border-top:1px solid var(--border);padding-top:18px;margin-top:4px;}
+  .mitigation-box h4{font-size:14px;font-weight:700;margin:0 0 4px 0;}
+  .mitigation-disclaimer{font-size:11.5px;color:var(--muted);margin:0 0 14px 0;line-height:1.5;}
+  .mitigation-list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px;}
+  .mitigation-list li{
+    background:#FAFAFC;border:1px solid var(--border);border-radius:9px;padding:11px 13px;font-size:13px;
+  }
+  .mitigation-list .trigger{display:block;font-size:11px;color:var(--accent);font-weight:600;margin-top:4px;}
+
+  /* ---------- Model performance page ---------- */
+  .metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:22px;}
+  @media (max-width:860px){.metric-grid{grid-template-columns:repeat(2,1fr);}}
+  .metric-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;}
+  .metric-card .m-label{font-size:12.5px;color:var(--muted);margin-bottom:8px;}
+  .metric-card .m-value{font-size:27px;font-weight:800;letter-spacing:-0.02em;}
+  .metric-card .m-note{font-size:11.5px;color:var(--muted);margin-top:6px;}
+
+  .limits-panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-top:22px;}
+  .limits-panel h3{font-size:15.5px;font-weight:700;margin:0 0 12px 0;}
+  .limits-panel ul{margin:0;padding-left:18px;font-size:13.5px;line-height:1.8;color:var(--text);}
+  .weights-panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-top:22px;}
+  .weights-panel h3{font-size:15.5px;font-weight:700;margin:0 0 4px 0;}
+  .weights-panel .sub{font-size:12.5px;color:var(--muted);margin:0 0 18px 0;line-height:1.5;}
+  .weight-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;}
+  .weight-row .w-label{width:260px;flex-shrink:0;font-size:13px;color:var(--text);}
+  .weight-row .w-bar-track{flex:1;height:10px;background:var(--bg);border-radius:20px;overflow:hidden;}
+  .weight-row .w-bar-fill{height:100%;background:var(--accent);border-radius:20px;}
+  .weight-row .w-pct{width:48px;text-align:right;font-size:13px;font-weight:700;flex-shrink:0;}
+  .weights-note{font-size:12px;color:var(--muted);line-height:1.6;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);}
+  .limits-panel .callout{
+    background:var(--danger-soft);color:#9a1f1f;border-radius:9px;padding:12px 14px;font-size:13px;margin-top:16px;line-height:1.55;
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- ===================== SIDEBAR ===================== -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 14h6l-1 8 10-13h-6z"/></svg>
+      </div>
+      <span class="brand-name">SandSight</span>
+    </div>
+
+    <nav class="nav">
+      <a class="nav-item active" data-page="dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        Dashboard
+      </a>
+      <a class="nav-item" data-page="predict">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 19V6a2 2 0 0 1 2-2h9l5 5v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M14 4v5h5"/><path d="M9 15l2 2 4-4"/></svg>
+        Run Prediction
+      </a>
+      <a class="nav-item" data-page="performance">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>
+        Model Performance
+      </a>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="user-chip">
+        <div class="avatar">EN</div>
+        <div class="user-meta">
+          <div class="name">Efe Nwachukwu</div>
+          <div class="role">Reservoir Engineer</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===================== MAIN ===================== -->
+  <div class="main">
+    <div class="topbar">
+      <div class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" placeholder="Search wells, fields...">
+      </div>
+      <div class="topbar-right">
+        <svg class="bell" viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
+        <div class="topbar-user">
+          <div class="avatar" style="width:30px;height:30px;font-size:11.5px;">EN</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ===================== DASHBOARD PAGE ===================== -->
+      <section class="page active" id="page-dashboard">
+        <div class="row-between">
+          <div>
+            <h1 class="page-title">Good afternoon, Efe</h1>
+            <p class="page-sub">Real-time portfolio snapshot from the prediction API.</p>
+          </div>
+          <button class="btn-primary" onclick="goTo('predict')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+            Run Prediction
+          </button>
+        </div>
+
+        <div class="completeness" id="data-source-banner" style="display:none;margin-top:16px;"></div>
+
+        <div class="section-head">
+          <div class="section-title">Wells Needing Attention <span class="count-pill" id="attention-count">–</span></div>
+          <button class="btn-ghost" onclick="loadWells()">Refresh <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/></svg></button>
+        </div>
+
+        <div class="card-row" id="risk-card-row"></div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h3>Portfolio Overview</h3>
+                <p>All monitored wells with sand history</p>
+              </div>
+              <button class="btn-secondary" style="font-size:12.5px;padding:7px 13px;">View all</button>
+            </div>
+            <table>
+              <thead>
+                <tr><th>Well</th><th>Expected</th><th>Ceiling (P90)</th><th>Risk</th></tr>
+              </thead>
+              <tbody id="portfolio-tbody"></tbody>
+            </table>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h3>Model Snapshot</h3>
+                <p>Validated on held-out years</p>
+              </div>
+            </div>
+            <div class="snapshot-metric"><span class="label">R² (log scale)</span><span class="value">0.37</span></div>
+            <div class="snapshot-metric"><span class="label">Mean absolute error</span><span class="value">5.70 pptb</span></div>
+            <div class="snapshot-metric"><span class="label">P90 calibration</span><span class="value">89.7%</span></div>
+            <div class="snapshot-metric"><span class="label">Coverage</span><span class="value small">8 fields · 1966–2011</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== RUN PREDICTION PAGE ===================== -->
+      <section class="page" id="page-predict">
+        <h1 class="page-title">Run Prediction</h1>
+        <p class="page-sub">Enter 3–12 months of production history, then a final row for the month you want to predict (leave its Sand value blank).</p>
+
+        <div class="form-panel">
+          <label class="field-label-sm">Well</label>
+          <select id="well-select" onchange="onWellChange()">
+            <option value="">Select a well…</option>
+          </select>
+          <div id="well-status" class="status-line" style="display:none;"></div>
+
+          <label class="field-label-sm" style="margin-top:20px;">Production history</label>
+          <div class="hist-table-wrap">
+            <table class="hist-table">
+              <thead>
+                <tr>
+                  <th>Month</th><th>Oil (bbls)</th><th>Water (bbls)</th><th>Gas (mscf)</th>
+                  <th>Cond (bbls)</th><th>Prod Days</th><th>Bean Size</th><th>Sand (pptb)</th><th></th>
+                </tr>
+              </thead>
+              <tbody id="hist-tbody"></tbody>
+            </table>
+          </div>
+          <div class="table-controls">
+            <button class="btn-secondary" onclick="addRow()">+ Add month</button>
+            <span class="field-hint" id="row-count-hint"></span>
+          </div>
+
+          <div class="completeness" id="completeness-box"></div>
+
+          <label class="field-label-sm" style="margin-top:22px;">Prediction type</label>
+          <div class="toggle-group">
+            <button class="toggle-opt selected" id="toggle-routine" onclick="setMode('routine')">
+              Routine prediction
+              <small>Using this well's actual reported values</small>
+            </button>
+            <button class="toggle-opt" id="toggle-scenario" onclick="setMode('scenario')">
+              What-if scenario
+              <small>Testing a hypothetical change</small>
+            </button>
+          </div>
+
+          <div class="predict-actions">
+            <button class="btn-primary" onclick="runPrediction(event)">Predict sand rate</button>
+            <span class="demo-note" id="api-status-note">No API connected — using local preview logic. Set API_BASE_URL in the script to go live.</span>
+          </div>
+        </div>
+
+        <div class="result-panel" id="result-panel">
+          <div class="scenario-flag" id="scenario-flag" style="display:none;">What-if scenario — not a routine forecast</div>
+          <div class="result-numbers">
+            <div class="num-block">
+              <div class="label">Expected</div>
+              <div class="num" id="res-expected">–</div>
+              <div class="unit">pptb</div>
+            </div>
+            <div class="num-block">
+              <div class="label">Plan for up to (P90)</div>
+              <div class="num" id="res-ceiling">–</div>
+              <div class="unit">pptb</div>
+            </div>
+            <div class="num-block">
+              <div class="label">Risk level</div>
+              <div class="num" id="res-risk" style="font-size:22px;padding-top:5px;">–</div>
+            </div>
+          </div>
+          <div class="caveat-line">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+            This model under-detects severe sanding events. Treat "Critical" as a floor, not a guarantee.
+          </div>
+          <div class="why-strip" id="why-strip"></div>
+
+          <div class="mitigation-box" id="mitigation-box" style="display:none;">
+            <h4>Suggested mitigation measures</h4>
+            <p class="mitigation-disclaimer">Standard sand-control practices matched to this well's inputs — not a model-derived diagnosis. Confirm against reservoir-specific judgment before acting.</p>
+            <ul class="mitigation-list" id="mitigation-list"></ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== MODEL PERFORMANCE PAGE ===================== -->
+      <section class="page" id="page-performance">
+        <h1 class="page-title">Model Performance</h1>
+        <p class="page-sub">Validated with expanding-window, out-of-sample testing — not random cross-validation.</p>
+
+        <div class="metric-grid">
+          <div class="metric-card">
+            <div class="m-label">R² (log scale)</div>
+            <div class="m-value">0.37</div>
+            <div class="m-note">Point model, 17,704 out-of-sample rows</div>
+          </div>
+          <div class="metric-card">
+            <div class="m-label">Mean absolute error</div>
+            <div class="m-value">5.70</div>
+            <div class="m-note">pptb, point model</div>
+          </div>
+          <div class="metric-card">
+            <div class="m-label">P90 calibration</div>
+            <div class="m-value">89.7%</div>
+            <div class="m-note">Target: 90%</div>
+          </div>
+          <div class="metric-card">
+            <div class="m-label">Extreme-event capture</div>
+            <div class="m-value">7–32%</div>
+            <div class="m-note">Within 30% of actual, top decile</div>
+          </div>
+        </div>
+
+        <div class="weights-panel">
+          <h3>What's Driving Sanding — Feature Weighting</h3>
+          <p class="sub">Global ranking of operational inputs by their relationship to sand rate, excluding the well's own sand-history features (which dominate the model) and Year (a likely dataset-era confound, not a physical driver). Computed once across the full training set — not specific to any single well or prediction.</p>
+          <div id="weights-list"></div>
+          <div class="weights-note" id="weights-note">Loading…</div>
+        </div>
+
+        <div class="limits-panel">
+          <h3>What this model can and can't do</h3>
+          <ul>
+            <li>Best on wells with an established, continuous sand-reading history — not usable for new or unmonitored wells.</li>
+            <li>Accuracy improves with more production history; predictions below 6 months of input rely partly on field-median imputation.</li>
+            <li>Trained and validated on 8 OML 30 fields, 1966–2011, with no bottomhole pressure data (98%+ missing across all fields).</li>
+            <li>Well-level petrophysical and seismic data was tested and did not meaningfully improve accuracy — coverage is limited to ~6% of records.</li>
+          </ul>
+          <div class="callout">
+            This is a screening and prioritization aid, not a substitute for monitoring. It is weakest exactly where the stakes are highest — severe sanding events — so results should inform engineering judgment, not replace it.
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ---------------- live API config ----------------
+// Set this to your deployed backend URL after you deploy sandsight_backend.zip
+// e.g. "https://sandsight-api.onrender.com"
+const API_BASE_URL = ""; // <-- fill in after deploying the backend
+
+// ---------------- mock well data (fallback only, used if API unavailable) ----------------
+const MOCK_WELLS = [
+  {well_id:'KOKR006L', field:'Kokori',  expected_pptb:6.4,  ceiling_pptb:18.2, risk:'Elevated'},
+  {well_id:'ORNI004L', field:'Oroni',   expected_pptb:22.8, ceiling_pptb:41.0, risk:'Critical'},
+  {well_id:'AFIE012S', field:'Afiesere',expected_pptb:3.1,  ceiling_pptb:8.4,  risk:'Normal'},
+  {well_id:'UZRW003T', field:'Uzere-West', expected_pptb:14.6, ceiling_pptb:29.7, risk:'Elevated'},
+  {well_id:'EVWR009L', field:'Evwreni', expected_pptb:2.0,  ceiling_pptb:5.9,  risk:'Normal'},
+  {well_id:'ERIE002S', field:'Eriemu',  expected_pptb:26.5, ceiling_pptb:52.3, risk:'Critical'},
+  {well_id:'OLOM014L', field:'Olomoro-Oleh', expected_pptb:4.7, ceiling_pptb:11.1, risk:'Normal'},
+  {well_id:'OWEH007T', field:'Oweh',    expected_pptb:9.9,  ceiling_pptb:20.4, risk:'Elevated'},
+];
+let WELLS = MOCK_WELLS;
+const riskRank = {Critical:3, Elevated:2, Normal:1};
+
+async function loadWells(){
+  const banner = document.getElementById('data-source-banner');
+  if(!API_BASE_URL){
+    banner.style.display='flex';
+    banner.className = 'completeness status-warn';
+    banner.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg><span>No API connected — showing 8 illustrative sample wells, not your real portfolio. Set API_BASE_URL to load all 248 wells.</span>`;
+    renderDashboard();
+    return;
+  }
+  try{
+    const res = await fetch(`${API_BASE_URL}/wells`);
+    if(!res.ok) throw new Error('request failed');
+    const data = await res.json();
+    WELLS = data.wells;
+    banner.style.display='flex';
+    banner.className = 'completeness status-ok';
+    banner.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg><span>Showing all ${data.count} wells. Snapshot based on each well's most recently recorded month (historical data, not a live feed).</span>`;
+  } catch(e){
+    WELLS = MOCK_WELLS;
+    banner.style.display='flex';
+    banner.className = 'completeness status-warn';
+    banner.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg><span>Could not reach the prediction API — showing 8 illustrative sample wells, not your real portfolio.</span>`;
+  }
+  renderDashboard();
+}
+
+// ---------------- nav ----------------
+function goTo(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.querySelector(`.nav-item[data-page="${page}"]`).classList.add('active');
+}
+document.querySelectorAll('.nav-item').forEach(n=>{
+  n.addEventListener('click', ()=>goTo(n.dataset.page));
+});
+
+// ---------------- dashboard render ----------------
+function renderDashboard(){
+  const maxExpected = Math.max(...WELLS.map(w=>w.ceiling_pptb), 1);
+  const attention = [...WELLS].sort((a,b)=>riskRank[b.risk]-riskRank[a.risk]).slice(0,4);
+  const cardRow = document.getElementById('risk-card-row');
+  cardRow.innerHTML = attention.map((w,i)=>{
+    const pct = Math.round((w.ceiling_pptb/maxExpected)*100);
+    return `
+    <div class="risk-card">
+      <div class="top-line">
+        <span class="field-label">${w.field}</span>
+        <span class="rank">#${i+1}</span>
+      </div>
+      <div class="well-id">${w.well_id}</div>
+      <div class="meta">Expected ${w.expected_pptb} pptb</div>
+      <div class="metric-line"><span>Plan for up to</span><b>${w.ceiling_pptb} pptb</b></div>
+      <div class="bar-track"><div class="bar-fill bar-${w.risk}" style="width:${pct}%"></div></div>
+      <div class="bottom-line">
+        <span class="dot-label"><span class="dot dot-${w.risk}"></span>${w.risk}</span>
+        <span class="tag risk-${w.risk}">${w.risk}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  const tbody = document.getElementById('portfolio-tbody');
+  const sorted = [...WELLS].sort((a,b)=>riskRank[b.risk]-riskRank[a.risk]);
+  tbody.innerHTML = sorted.slice(0,25).map(w=>`
+    <tr>
+      <td><div class="well-cell">${w.well_id}</div><div class="field-chip">${w.field}</div></td>
+      <td>${w.expected_pptb} pptb</td>
+      <td>${w.ceiling_pptb} pptb</td>
+      <td><span class="tag risk-${w.risk}">${w.risk}</span></td>
+    </tr>`).join('');
+  if(sorted.length>25){
+    tbody.innerHTML += `<tr><td colspan="4" style="text-align:center;color:var(--muted);font-size:12px;padding:10px;">+ ${sorted.length-25} more wells (showing highest-risk first)</td></tr>`;
+  }
+
+  const select = document.getElementById('well-select');
+  select.innerHTML = '<option value="">Select a well…</option>' +
+    WELLS.map(w=>`<option value="${w.well_id}">${w.well_id} — ${w.field}</option>`).join('');
+
+  document.getElementById('attention-count').textContent =
+    WELLS.filter(w=>w.risk!=='Normal').length;
+}
+loadWells();
+
+// ---------------- feature weighting (Model Performance page) ----------------
+const FALLBACK_WEIGHTS = {
+  weights: [
+    {feature:'GOR_chg', label:'Change in gas-oil ratio (month-over-month)', weight_pct:56.74},
+    {feature:'Water_Cut', label:'Water cut', weight_pct:13.89},
+    {feature:'Water_Cut_chg', label:'Change in water cut', weight_pct:7.34},
+    {feature:'Month', label:'Seasonality (calendar month)', weight_pct:6.91},
+    {feature:'Gas_Rate_mscfd', label:'Gas production rate', weight_pct:3.13},
+    {feature:'Water_Rate_bpd', label:'Water production rate', weight_pct:3.09},
+    {feature:'Oil_Rate_bpd_chg', label:'Change in oil rate', weight_pct:2.68},
+    {feature:'GOR', label:'Gas-oil ratio', weight_pct:2.11},
+    {feature:'Liquid_Rate_bpd_chg', label:'Change in liquid rate', weight_pct:1.53},
+    {feature:'Delta_Bean_Size', label:'Change in choke/bean size', weight_pct:1.41},
+    {feature:'liq_ratio', label:'Liquid rate vs. recent average', weight_pct:1.16},
+  ],
+  note: "Ranking excludes sand-history features (lags/rolling stats of the well's own past sand readings) and Year (a likely dataset-era confound). Local preview data — connect API_BASE_URL for live-computed weights.",
+};
+
+async function loadFeatureWeights(){
+  let data;
+  if(!API_BASE_URL){
+    data = FALLBACK_WEIGHTS;
+  } else {
+    try{
+      const res = await fetch(`${API_BASE_URL}/feature-weights`);
+      if(!res.ok) throw new Error('request failed');
+      data = await res.json();
+    } catch(e){
+      data = FALLBACK_WEIGHTS;
+    }
+  }
+  const list = document.getElementById('weights-list');
+  const maxPct = Math.max(...data.weights.map(w=>w.weight_pct));
+  list.innerHTML = data.weights.map(w => `
+    <div class="weight-row">
+      <div class="w-label">${w.label}</div>
+      <div class="w-bar-track"><div class="w-bar-fill" style="width:${(w.weight_pct/maxPct*100).toFixed(1)}%"></div></div>
+      <div class="w-pct">${w.weight_pct.toFixed(1)}%</div>
+    </div>`).join('');
+  document.getElementById('weights-note').textContent = data.note;
+}
+loadFeatureWeights();
+
+// ---------------- history table ----------------
+let rowCount = 0;
+const MIN_ROWS = 4, MAX_ROWS = 13; // last row = target month (no sand value), rest = history sent to the model
+
+function monthLabel(offset){
+  const d = new Date(); d.setMonth(d.getMonth()-(rowCount-offset));
+  return d.toLocaleString('default',{month:'short', year:'2-digit'});
+}
+
+function addRow(){
+  if(rowCount>=MAX_ROWS) return;
+  rowCount++;
+  const tbody = document.getElementById('hist-tbody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td style="font-weight:600;">M${rowCount}</td>
+    <td><input type="number" min="0" placeholder="0"></td>
+    <td><input type="number" min="0" placeholder="0"></td>
+    <td><input type="number" min="0" placeholder="0"></td>
+    <td><input type="number" min="0" placeholder="0"></td>
+    <td><input type="number" min="1" max="31" placeholder="30"></td>
+    <td><input type="number" min="0" placeholder="0"></td>
+    <td><input type="number" min="0" placeholder="0" class="sand-input"></td>
+    <td class="row-actions"><button onclick="removeRow(this)">Remove</button></td>
+  `;
+  tbody.appendChild(tr);
+  updateControls();
+}
+function removeRow(btn){
+  if(rowCount<=MIN_ROWS) return;
+  btn.closest('tr').remove();
+  rowCount--;
+  updateControls();
+}
+function updateControls(){
+  const historyMonths = rowCount - 1;
+  document.getElementById('row-count-hint').textContent =
+    `${historyMonths} history month(s) + 1 target month entered (minimum ${MIN_ROWS-1} history months)`;
+  const box = document.getElementById('completeness-box');
+  let msg, cls;
+  if(historyMonths<6){
+    msg = `<b>${historyMonths} history months entered.</b> Lag-1 to lag-3 features will be real; lag-6, lag-12 and roll-6, roll-12 will use field-median fallback (reduced accuracy).`;
+    cls = 'status-warn';
+  } else if(historyMonths<12){
+    msg = `<b>${historyMonths} history months entered.</b> Lag-1 to lag-6 and roll-3/roll-6 will be real; lag-12 and roll-12 still imputed.`;
+    cls = 'status-warn';
+  } else {
+    msg = `<b>12 history months entered.</b> Full feature set — no imputation.`;
+    cls = 'status-ok';
+  }
+  box.className = 'completeness ' + cls;
+  box.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg><span>${msg}</span>`;
+}
+for(let i=0;i<MIN_ROWS;i++) addRow();
+
+// ---------------- well select status ----------------
+function onWellChange(){
+  const val = document.getElementById('well-select').value;
+  const box = document.getElementById('well-status');
+  if(!val){ box.style.display='none'; return; }
+  box.style.display='flex';
+  box.className = 'status-line status-ok';
+  box.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M20 6 9 17l-5-5"/></svg> Sand history found — last reading available. You can prefill from history or enter new months below.`;
+}
+
+// ---------------- mode toggle ----------------
+let mode = 'routine';
+function setMode(m){
+  mode = m;
+  document.getElementById('toggle-routine').classList.toggle('selected', m==='routine');
+  document.getElementById('toggle-scenario').classList.toggle('selected', m==='scenario');
+}
+
+// ---------------- predict (calls live API if configured) ----------------
+function collectHistoryPayload(){
+  const rows = [...document.querySelectorAll('#hist-tbody tr')];
+  const today = new Date();
+  return rows.map((tr, i)=>{
+    const inputs = tr.querySelectorAll('input');
+    const monthsAgo = rows.length - i; // last row = most recent history month
+    const d = new Date(today.getFullYear(), today.getMonth()-monthsAgo, 1);
+    return {
+      date: d.toISOString().slice(0,10),
+      oil_vol_bbls: parseFloat(inputs[0].value)||0,
+      water_vol_bbls: parseFloat(inputs[1].value)||0,
+      gas_vol_mscf: parseFloat(inputs[2].value)||0,
+      cond_vol_bbls: parseFloat(inputs[3].value)||0,
+      prod_days: parseInt(inputs[4].value)||30,
+      bean_size: parseFloat(inputs[5].value)||0,
+      sand_pptb: parseFloat(inputs[6].value)||0,
+    };
+  });
+}
+
+function localHeuristicFallback(){
+  const sandInputs = [...document.querySelectorAll('.sand-input')].map(i=>parseFloat(i.value)||0);
+  const beanInputs = [...document.querySelectorAll('.hist-tbody tr')].map(tr=>parseFloat(tr.children[6].querySelector('input').value)||0);
+  const avgSand = sandInputs.reduce((a,b)=>a+b,0)/Math.max(sandInputs.length,1);
+  const trendUp = sandInputs.length>1 && sandInputs[sandInputs.length-1] > sandInputs[0];
+  const expected = Math.max(0.5, avgSand * (trendUp?1.08:0.98));
+  const ceiling = expected * (1.9 + (trendUp?0.4:0));
+  return {expected_pptb: expected, ceiling_p90_pptb: ceiling,
+          risk_level: ceiling>=20?'Critical':ceiling>=8?'Elevated':'Normal',
+          imputed_features: [], _demo: true};
+}
+
+async function runPrediction(event){
+  const btn = event.target;
+  const originalLabel = btn.textContent;
+  btn.textContent = 'Predicting…'; btn.disabled = true;
+
+  const wellId = document.getElementById('well-select').value || 'UNSPECIFIED';
+  const history = collectHistoryPayload();
+  const beanInputs = history.map(h=>h.bean_size);
+  const trendUp = history.length>1 && history[history.length-1].sand_pptb > history[0].sand_pptb;
+  const beanTrendUp = beanInputs.length>1 && beanInputs[beanInputs.length-1] > beanInputs[0];
+
+  let result, isDemo = false;
+  if(!API_BASE_URL){
+    result = localHeuristicFallback();
+    isDemo = true;
+  } else {
+    try {
+      const targetMonth = { ...history[history.length-1] };
+      delete targetMonth.sand_pptb; // this is what we're predicting
+      const res = await fetch(`${API_BASE_URL}/predict`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          well_id: wellId,
+          history: history.slice(0, -1), // all but the target month
+          target_month: targetMonth,
+        })
+      });
+      if(!res.ok){
+        const err = await res.json().catch(()=>({detail: res.statusText}));
+        throw new Error(err.detail || 'Prediction failed');
+      }
+      result = await res.json();
+      result.expected_pptb = result.expected_pptb;
+      result.ceiling_p90_pptb = result.ceiling_p90_pptb;
+    } catch(e){
+      alert(`Prediction API error: ${e.message}\n\nFalling back to local preview mode.`);
+      result = localHeuristicFallback();
+      isDemo = true;
+    }
+  }
+
+  btn.textContent = originalLabel; btn.disabled = false;
+
+  const expected = result.expected_pptb, ceiling = result.ceiling_p90_pptb, risk = result.risk_level;
+  const panel = document.getElementById('result-panel');
+  panel.style.display='block';
+  panel.classList.toggle('scenario', mode==='scenario');
+  document.getElementById('scenario-flag').style.display = mode==='scenario' ? 'inline-flex' : 'none';
+  document.getElementById('res-expected').textContent = expected.toFixed(1);
+  document.getElementById('res-ceiling').textContent = ceiling.toFixed(1);
+  document.getElementById('res-risk').innerHTML = `<span class="tag risk-${risk}">${risk}</span>`;
+
+  const sourceNote = isDemo ? ' (local preview — connect API_BASE_URL for live model)' : '';
+  document.getElementById('why-strip').innerHTML =
+    `<b>Primary driver:</b> this well's own recent sand-rate trend (${rowCount} months of history used).${sourceNote}`;
+
+  const mitBox = document.getElementById('mitigation-box');
+  const list = document.getElementById('mitigation-list');
+  const items = [];
+  if(risk!=='Normal'){
+    if(trendUp) items.push({t:'Recommend multi-rate testing to re-establish the critical flow rate rather than continuing at the current choke setting.', w:'rising sand trend'});
+    if(beanTrendUp) items.push({t:'Consider stepping back to the prior stable bean size rather than a further rate increase.', w:'recent bean-size increase'});
+    if(!items.length) items.push({t:'Increase sand-monitoring frequency (traps or acoustic detectors) and shorten review intervals.', w:'generally elevated risk'});
+    if(risk==='Critical') items.push({t:'Flag for sand-control completion review (gravel pack, screens, or resin consolidation).', w:'critical risk level'});
+    mitBox.style.display='block';
+    list.innerHTML = items.map(it=>`<li>${it.t}<span class="trigger">Triggered by: ${it.w}</span></li>`).join('');
+  } else {
+    mitBox.style.display='none';
+  }
+
+  panel.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+</script>
+</body>
+</html>
